@@ -19,6 +19,7 @@ const Index = () => {
     createNewChat,
     selectConversation,
     deleteConversation,
+    renameConversation,
   } = useChat();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
