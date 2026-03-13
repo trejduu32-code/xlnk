@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
-import { Send, Square } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Send, Square, Paperclip } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -33,35 +32,39 @@ export function ChatInput({ onSend, onStop, isLoading }: ChatInputProps) {
   };
 
   return (
-    <div className="flex items-end gap-2 p-4 border-t border-border bg-card">
-      <textarea
-        ref={textareaRef}
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Type a message..."
-        rows={1}
-        className="flex-1 resize-none bg-secondary rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
-      />
-      {isLoading ? (
-        <Button
-          onClick={onStop}
-          size="icon"
-          variant="destructive"
-          className="rounded-xl h-[44px] w-[44px] flex-shrink-0"
-        >
-          <Square className="w-4 h-4" />
-        </Button>
-      ) : (
-        <Button
-          onClick={handleSend}
-          disabled={!input.trim()}
-          size="icon"
-          className="rounded-xl h-[44px] w-[44px] flex-shrink-0"
-        >
-          <Send className="w-4 h-4" />
-        </Button>
-      )}
+    <div className="p-4 pb-6">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="ask AI...✦°"
+          rows={1}
+          className="w-full resize-none bg-transparent px-4 pt-3 pb-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+        />
+        <div className="flex items-center justify-between px-3 pb-2.5">
+          <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg">
+            <Paperclip className="w-4 h-4" />
+          </button>
+          {isLoading ? (
+            <button
+              onClick={onStop}
+              className="p-1.5 text-destructive hover:text-destructive/80 transition-colors rounded-lg"
+            >
+              <Square className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg disabled:opacity-30"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

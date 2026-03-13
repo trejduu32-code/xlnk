@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { DEFAULT_MODEL } from "@/lib/models";
 
 export interface ChatMessage {
@@ -9,11 +9,69 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+export interface Conversation {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  model: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const STORAGE_KEY = "ai-chat-conversations";
+
+function loadConversations(): Conversation[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return [];
+    return JSON.parse(data).map((c: any) => ({
+      ...c,
+      createdAt: new Date(c.createdAt),
+      updatedAt: new Date(c.updatedAt),
+      messages: c.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function saveConversations(convos: Conversation[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(convos));
+}
+
 export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>(loadConversations);
+  const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL.id);
   const abortRef = useRef(false);
+
+  const activeConvo = conversations.find(c => c.id === activeConvoId) || null;
+  const messages = activeConvo?.messages || [];
+
+  // Persist on change
+  useEffect(() => {
+    saveConversations(conversations);
+  }, [conversations]);
+
+  const createNewChat = useCallback(() => {
+    setActiveConvoId(null);
+    setIsLoading(false);
+    abortRef.current = true;
+  }, []);
+
+  const selectConversation = useCallback((id: string) => {
+    setActiveConvoId(id);
+    const convo = conversations.find(c => c.id === id);
+    if (convo) setSelectedModel(convo.model);
+  }, [conversations]);
+
+  const deleteConversation = useCallback((id: string) => {
+    setConversations(prev => prev.filter(c => c.id !== id));
+    if (activeConvoId === id) {
+      setActiveConvoId(null);
+    }
+  }, [activeConvoId]);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
@@ -33,7 +91,32 @@ export function useChat() {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMsg, assistantMsg]);
+    let convoId = activeConvoId;
+
+    if (!convoId) {
+      // Create new conversation
+      convoId = crypto.randomUUID();
+      const title = content.trim().slice(0, 50) + (content.trim().length > 50 ? "..." : "");
+      const newConvo: Conversation = {
+        id: convoId,
+        title,
+        messages: [userMsg, assistantMsg],
+        model: selectedModel,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      setConversations(prev => [newConvo, ...prev]);
+      setActiveConvoId(convoId);
+    } else {
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === convoId
+            ? { ...c, messages: [...c.messages, userMsg, assistantMsg], updatedAt: new Date() }
+            : c
+        )
+      );
+    }
+
     setIsLoading(true);
     abortRef.current = false;
 
@@ -53,43 +136,55 @@ export function useChat() {
         if (abortRef.current) break;
         const text = part?.text || "";
         fullText += text;
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === assistantMsg.id ? { ...m, content: fullText } : m
+        const currentText = fullText;
+        setConversations(prev =>
+          prev.map(c =>
+            c.id === convoId
+              ? {
+                  ...c,
+                  messages: c.messages.map(m =>
+                    m.id === assistantMsg.id ? { ...m, content: currentText } : m
+                  ),
+                }
+              : c
           )
         );
       }
     } catch (error: any) {
-      setMessages(prev =>
-        prev.map(m =>
-          m.id === assistantMsg.id
-            ? { ...m, content: `Error: ${error?.message || "Something went wrong. Please try again."}` }
-            : m
+      const errorText = `Error: ${error?.message || "Something went wrong."}`;
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === convoId
+            ? {
+                ...c,
+                messages: c.messages.map(m =>
+                  m.id === assistantMsg.id ? { ...m, content: errorText } : m
+                ),
+              }
+            : c
         )
       );
     } finally {
       setIsLoading(false);
     }
-  }, [messages, selectedModel, isLoading]);
+  }, [messages, selectedModel, isLoading, activeConvoId]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current = true;
     setIsLoading(false);
   }, []);
 
-  const clearMessages = useCallback(() => {
-    setMessages([]);
-    setIsLoading(false);
-    abortRef.current = true;
-  }, []);
-
   return {
+    conversations,
+    activeConvoId,
     messages,
     isLoading,
     selectedModel,
     setSelectedModel,
     sendMessage,
     stopGenerating,
-    clearMessages,
+    createNewChat,
+    selectConversation,
+    deleteConversation,
   };
 }

@@ -20,25 +20,25 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
 
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger className="w-[220px] h-9 text-sm bg-card border-border">
+      <SelectTrigger className="w-auto h-8 text-xs font-medium bg-card border-border rounded-lg px-3 gap-1.5">
         <SelectValue>
           {selectedModel?.name || "Select model"}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="bg-popover border-border">
         {MODEL_PROVIDERS.map(provider => {
           const providerModels = MODELS.filter(m => m.provider === provider.id);
           if (providerModels.length === 0) return null;
           return (
             <SelectGroup key={provider.id}>
-              <SelectLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <SelectLabel className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-2">
                 {provider.name}
               </SelectLabel>
               {providerModels.map(model => (
-                <SelectItem key={model.id} value={model.id}>
+                <SelectItem key={model.id} value={model.id} className="text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{model.name}</span>
-                    <span className="text-xs text-muted-foreground">{model.description}</span>
+                    <span>{model.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{model.description}</span>
                   </div>
                 </SelectItem>
               ))}
