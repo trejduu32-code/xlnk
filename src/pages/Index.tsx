@@ -40,6 +40,7 @@ const Index = () => {
         onSelect={selectConversation}
         onNew={createNewChat}
         onDelete={deleteConversation}
+        onRename={renameConversation}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

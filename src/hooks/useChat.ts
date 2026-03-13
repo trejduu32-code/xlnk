@@ -192,5 +192,6 @@ export function useChat() {
     createNewChat,
     selectConversation,
     deleteConversation,
+    renameConversation,
   };
 }
