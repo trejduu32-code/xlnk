@@ -19,6 +19,7 @@ const Index = () => {
     createNewChat,
     selectConversation,
     deleteConversation,
+    renameConversation,
   } = useChat();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -39,6 +40,7 @@ const Index = () => {
         onSelect={selectConversation}
         onNew={createNewChat}
         onDelete={deleteConversation}
+        onRename={renameConversation}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

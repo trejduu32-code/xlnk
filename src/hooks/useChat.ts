@@ -73,6 +73,12 @@ export function useChat() {
     }
   }, [activeConvoId]);
 
+  const renameConversation = useCallback((id: string, title: string) => {
+    setConversations(prev =>
+      prev.map(c => c.id === id ? { ...c, title } : c)
+    );
+  }, []);
+
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
 
@@ -186,5 +192,6 @@ export function useChat() {
     createNewChat,
     selectConversation,
     deleteConversation,
+    renameConversation,
   };
 }
