@@ -126,35 +126,76 @@ export function useChat() {
     setIsLoading(true);
     abortRef.current = false;
 
+    const controller = new AbortController();
+    abortRef.current = false;
+
     try {
       const history = [...messages, userMsg].map(m => ({
         role: m.role,
         content: m.content,
       }));
 
-      const response = await puter.ai.chat(history, {
-        model: selectedModel,
-        stream: true,
+      const response = await fetch("https://free.oaibest.com/api/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
+        },
+        body: JSON.stringify({
+          model: selectedModel,
+          messages: history,
+          stream: true,
+        }),
+        signal: controller.signal,
       });
 
+      if (!response.ok || !response.body) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
       let fullText = "";
-      for await (const part of response) {
-        if (abortRef.current) break;
-        const text = part?.text || "";
-        fullText += text;
-        const currentText = fullText;
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === convoId
-              ? {
-                  ...c,
-                  messages: c.messages.map(m =>
-                    m.id === assistantMsg.id ? { ...m, content: currentText } : m
-                  ),
-                }
-              : c
-          )
-        );
+      let buffer = "";
+
+      while (true) {
+        if (abortRef.current) {
+          controller.abort();
+          break;
+        }
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIdx: number;
+        while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, newlineIdx);
+          buffer = buffer.slice(newlineIdx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              fullText += content;
+              const currentText = fullText;
+              setConversations(prev =>
+                prev.map(c =>
+                  c.id === convoId
+                    ? {
+                        ...c,
+                        messages: c.messages.map(m =>
+                          m.id === assistantMsg.id ? { ...m, content: currentText } : m
+                        ),
+                      }
+                    : c
+                )
+              );
+            }
+          } catch { /* partial JSON, skip */ }
+        }
       }
     } catch (error: any) {
       const errorText = `Error: ${error?.message || "Something went wrong."}`;
