@@ -162,7 +162,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, activeConvoId]);
+  }, [messages, isLoading, activeConvoId, maxTokens, temperature, topP]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current = true;
