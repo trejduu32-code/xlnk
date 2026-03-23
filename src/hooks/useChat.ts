@@ -40,6 +40,9 @@ export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations);
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [maxTokens, setMaxTokens] = useState(1);
+  const [temperature, setTemperature] = useState(7);
+  const [topP, setTopP] = useState(0.9);
   const abortRef = useRef(false);
 
   const activeConvo = conversations.find(c => c.id === activeConvoId) || null;
@@ -122,9 +125,9 @@ export function useChat() {
       
       const result = await client.predict("/chat", {
         message: { text: content.trim(), files: [] },
-        max_tokens: 12800,
-        temperature: 0.1,
-        top_p: 0.9,
+        max_tokens: maxTokens,
+        temperature,
+        top_p: topP,
       });
 
       const responseText = String(result.data);
@@ -159,7 +162,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, activeConvoId]);
+  }, [messages, isLoading, activeConvoId, maxTokens, temperature, topP]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current = true;
@@ -171,6 +174,12 @@ export function useChat() {
     activeConvoId,
     messages,
     isLoading,
+    maxTokens,
+    setMaxTokens,
+    temperature,
+    setTemperature,
+    topP,
+    setTopP,
     sendMessage,
     stopGenerating,
     createNewChat,
