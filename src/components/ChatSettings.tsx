@@ -39,12 +39,12 @@ export function ChatSettings({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Max Tokens</span>
-              <span className="text-foreground font-medium">{maxTokens}</span>
+              <span className="text-foreground font-medium">{maxTokens === -1 ? "Unlimited" : maxTokens}</span>
             </div>
             <Slider
               value={[maxTokens]}
               onValueChange={([v]) => setMaxTokens(v)}
-              min={1}
+              min={-1}
               max={12800}
               step={1}
             />

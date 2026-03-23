@@ -40,7 +40,7 @@ export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations);
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [maxTokens, setMaxTokens] = useState(1);
+  const [maxTokens, setMaxTokens] = useState(-1);
   const [temperature, setTemperature] = useState(7);
   const [topP, setTopP] = useState(0.9);
   const abortRef = useRef(false);
@@ -123,27 +123,40 @@ export function useChat() {
       const { Client } = await import("@gradio/client");
       const client = await Client.connect("MiniMaxAI/MiniMax-VL-01");
       
-      const result = await client.predict("/chat", {
+      const job = client.submit("/chat", {
         message: { text: content.trim(), files: [] },
         max_tokens: maxTokens,
         temperature,
         top_p: topP,
       });
 
-      const responseText = String(result.data);
+      let fullText = "";
 
-      setConversations(prev =>
-        prev.map(c =>
-          c.id === convoId
-            ? {
-                ...c,
-                messages: c.messages.map(m =>
-                  m.id === assistantMsg.id ? { ...m, content: responseText } : m
-                ),
-              }
-            : c
-        )
-      );
+      for await (const event of job) {
+        if (abortRef.current) {
+          job.cancel();
+          break;
+        }
+        if (event.type === "data") {
+          const chunk = String(event.data?.[0] ?? "");
+          if (chunk) {
+            fullText = chunk;
+            const currentText = fullText;
+            setConversations(prev =>
+              prev.map(c =>
+                c.id === convoId
+                  ? {
+                      ...c,
+                      messages: c.messages.map(m =>
+                        m.id === assistantMsg.id ? { ...m, content: currentText } : m
+                      ),
+                    }
+                  : c
+              )
+            );
+          }
+        }
+      }
     } catch (error: any) {
       if (abortRef.current) return;
       const errorText = `Error: ${error?.message || "Something went wrong."}`;
