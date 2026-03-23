@@ -125,9 +125,9 @@ export function useChat() {
       
       const result = await client.predict("/chat", {
         message: { text: content.trim(), files: [] },
-        max_tokens: 12800,
-        temperature: 0.1,
-        top_p: 0.9,
+        max_tokens: maxTokens,
+        temperature,
+        top_p: topP,
       });
 
       const responseText = String(result.data);
