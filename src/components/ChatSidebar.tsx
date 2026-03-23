@@ -55,7 +55,7 @@ export function ChatSidebar({
         <div className="flex items-center justify-between px-4 h-14 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-foreground" />
-            <span className="text-sm font-semibold text-foreground">Chats</span>
+            <span className="text-sm font-semibold text-foreground">1mp Ai</span>
           </div>
           <button
             onClick={onClose}

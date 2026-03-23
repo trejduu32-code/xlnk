@@ -59,8 +59,7 @@ const Index = () => {
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-foreground" />
-              <span className="text-sm font-semibold text-foreground">MiniMax VL</span>
+            <span className="text-sm font-semibold text-foreground">1mp Ai</span>
             </div>
           </div>
           <ChatSettings
@@ -78,9 +77,9 @@ const Index = () => {
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <Sparkles className="w-10 h-10 text-muted-foreground mb-4" />
-              <h2 className="text-lg font-semibold text-foreground mb-1">MiniMax VL-01</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-1">1mp Ai</h2>
               <p className="text-sm text-muted-foreground max-w-sm">
-                Vision-language model. Ask anything or describe an image.
+                Ask anything — powered by MiniMax VL-01.
               </p>
             </div>
           ) : (
