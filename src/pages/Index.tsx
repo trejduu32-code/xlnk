@@ -59,8 +59,7 @@ const Index = () => {
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-foreground" />
-              <span className="text-sm font-semibold text-foreground">MiniMax VL</span>
+            <span className="text-sm font-semibold text-foreground">1mp Ai</span>
             </div>
           </div>
           <ChatSettings
