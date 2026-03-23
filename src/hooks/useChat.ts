@@ -130,8 +130,6 @@ export function useChat() {
         top_p: topP,
       });
 
-      let fullText = "";
-
       for await (const event of job) {
         if (abortRef.current) {
           job.cancel();
@@ -140,8 +138,7 @@ export function useChat() {
         if (event.type === "data") {
           const chunk = String(event.data?.[0] ?? "");
           if (chunk) {
-            fullText = chunk;
-            const currentText = fullText;
+            const currentText = chunk;
             setConversations(prev =>
               prev.map(c =>
                 c.id === convoId
@@ -156,6 +153,7 @@ export function useChat() {
             );
           }
         }
+        // Ignore status/log events - don't break out of the loop
       }
     } catch (error: any) {
       if (abortRef.current) return;

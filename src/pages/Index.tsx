@@ -77,9 +77,9 @@ const Index = () => {
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <Sparkles className="w-10 h-10 text-muted-foreground mb-4" />
-              <h2 className="text-lg font-semibold text-foreground mb-1">MiniMax VL-01</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-1">1mp Ai</h2>
               <p className="text-sm text-muted-foreground max-w-sm">
-                Vision-language model. Ask anything or describe an image.
+                Ask anything — powered by MiniMax VL-01.
               </p>
             </div>
           ) : (
