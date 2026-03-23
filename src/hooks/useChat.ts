@@ -123,27 +123,40 @@ export function useChat() {
       const { Client } = await import("@gradio/client");
       const client = await Client.connect("MiniMaxAI/MiniMax-VL-01");
       
-      const result = await client.predict("/chat", {
+      const job = client.submit("/chat", {
         message: { text: content.trim(), files: [] },
         max_tokens: maxTokens,
         temperature,
         top_p: topP,
       });
 
-      const responseText = String(result.data);
+      let fullText = "";
 
-      setConversations(prev =>
-        prev.map(c =>
-          c.id === convoId
-            ? {
-                ...c,
-                messages: c.messages.map(m =>
-                  m.id === assistantMsg.id ? { ...m, content: responseText } : m
-                ),
-              }
-            : c
-        )
-      );
+      for await (const event of job) {
+        if (abortRef.current) {
+          job.cancel();
+          break;
+        }
+        if (event.type === "data") {
+          const chunk = String(event.data?.[0] ?? "");
+          if (chunk) {
+            fullText = chunk;
+            const currentText = fullText;
+            setConversations(prev =>
+              prev.map(c =>
+                c.id === convoId
+                  ? {
+                      ...c,
+                      messages: c.messages.map(m =>
+                        m.id === assistantMsg.id ? { ...m, content: currentText } : m
+                      ),
+                    }
+                  : c
+              )
+            );
+          }
+        }
+      }
     } catch (error: any) {
       if (abortRef.current) return;
       const errorText = `Error: ${error?.message || "Something went wrong."}`;
