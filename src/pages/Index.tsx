@@ -79,7 +79,7 @@ const Index = () => {
               <Sparkles className="w-10 h-10 text-muted-foreground mb-4" />
               <h2 className="text-lg font-semibold text-foreground mb-1">1mp Ai</h2>
               <p className="text-sm text-muted-foreground max-w-sm">
-                Ask anything — powered by MiniMax VL-01.
+                Ask anything — powered by MiniMax VL.
               </p>
             </div>
           ) : (

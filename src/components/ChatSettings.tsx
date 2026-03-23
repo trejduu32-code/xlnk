@@ -45,7 +45,7 @@ export function ChatSettings({
               value={[maxTokens]}
               onValueChange={([v]) => setMaxTokens(v)}
               min={-1}
-              max={12800}
+              max={100000}
               step={1}
             />
           </div>
@@ -58,7 +58,7 @@ export function ChatSettings({
             <Slider
               value={[temperature]}
               onValueChange={([v]) => setTemperature(v)}
-              min={0}
+              min={0.9}
               max={10}
               step={0.1}
             />
