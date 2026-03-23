@@ -3,6 +3,7 @@ import { useChat } from "@/hooks/useChat";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { ChatInput } from "@/components/ChatInput";
 import { ChatMessageBubble } from "@/components/ChatMessage";
+import { ChatSettings } from "@/components/ChatSettings";
 import { Menu, Sparkles } from "lucide-react";
 
 const Index = () => {
@@ -11,6 +12,12 @@ const Index = () => {
     activeConvoId,
     messages,
     isLoading,
+    maxTokens,
+    setMaxTokens,
+    temperature,
+    setTemperature,
+    topP,
+    setTopP,
     sendMessage,
     stopGenerating,
     createNewChat,
@@ -41,19 +48,29 @@ const Index = () => {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-foreground" />
-            <span className="text-sm font-semibold text-foreground">MiniMax VL</span>
+        <div className="flex items-center justify-between px-4 h-14 border-b border-border flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-foreground" />
+              <span className="text-sm font-semibold text-foreground">MiniMax VL</span>
+            </div>
           </div>
+          <ChatSettings
+            maxTokens={maxTokens}
+            setMaxTokens={setMaxTokens}
+            temperature={temperature}
+            setTemperature={setTemperature}
+            topP={topP}
+            setTopP={setTopP}
+          />
         </div>
 
         {/* Messages */}
