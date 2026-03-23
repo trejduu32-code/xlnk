@@ -57,7 +57,7 @@ function CodeBlock({ className, children }: { className?: string; children: stri
 
 export function ChatMessageBubble({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
-  const model = MODELS.find(m => m.id === message.model);
+  const model = null;
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>

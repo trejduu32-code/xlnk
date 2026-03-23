@@ -1,11 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { DEFAULT_MODEL } from "@/lib/models";
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  model?: string;
   timestamp: Date;
 }
 
@@ -13,7 +11,6 @@ export interface Conversation {
   id: string;
   title: string;
   messages: ChatMessage[];
-  model: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,13 +40,11 @@ export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations);
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL.id);
   const abortRef = useRef(false);
 
   const activeConvo = conversations.find(c => c.id === activeConvoId) || null;
   const messages = activeConvo?.messages || [];
 
-  // Persist on change
   useEffect(() => {
     saveConversations(conversations);
   }, [conversations]);
@@ -62,9 +57,7 @@ export function useChat() {
 
   const selectConversation = useCallback((id: string) => {
     setActiveConvoId(id);
-    const convo = conversations.find(c => c.id === id);
-    if (convo) setSelectedModel(convo.model);
-  }, [conversations]);
+  }, []);
 
   const deleteConversation = useCallback((id: string) => {
     setConversations(prev => prev.filter(c => c.id !== id));
@@ -93,21 +86,18 @@ export function useChat() {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
-      model: selectedModel,
       timestamp: new Date(),
     };
 
     let convoId = activeConvoId;
 
     if (!convoId) {
-      // Create new conversation
       convoId = crypto.randomUUID();
       const title = content.trim().slice(0, 50) + (content.trim().length > 50 ? "..." : "");
       const newConvo: Conversation = {
         id: convoId,
         title,
         messages: [userMsg, assistantMsg],
-        model: selectedModel,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -126,78 +116,33 @@ export function useChat() {
     setIsLoading(true);
     abortRef.current = false;
 
-    const controller = new AbortController();
-    abortRef.current = false;
-
     try {
-      const history = [...messages, userMsg].map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      const response = await fetch("https://free.oaibest.com/api/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json, text/event-stream",
-        },
-        body: JSON.stringify({
-          model: selectedModel,
-          messages: history,
-          stream: true,
-        }),
-        signal: controller.signal,
+      const { Client } = await import("@gradio/client");
+      const client = await Client.connect("MiniMaxAI/MiniMax-VL-01");
+      
+      const result = await client.predict("/chat", {
+        message: { text: content.trim(), files: [] },
+        max_tokens: 12800,
+        temperature: 0.1,
+        top_p: 0.9,
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error(`API error: ${response.status}`);
-      }
+      const responseText = String(result.data);
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-      let buffer = "";
-
-      while (true) {
-        if (abortRef.current) {
-          controller.abort();
-          break;
-        }
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let newlineIdx: number;
-        while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, newlineIdx);
-          buffer = buffer.slice(newlineIdx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              fullText += content;
-              const currentText = fullText;
-              setConversations(prev =>
-                prev.map(c =>
-                  c.id === convoId
-                    ? {
-                        ...c,
-                        messages: c.messages.map(m =>
-                          m.id === assistantMsg.id ? { ...m, content: currentText } : m
-                        ),
-                      }
-                    : c
-                )
-              );
-            }
-          } catch { /* partial JSON, skip */ }
-        }
-      }
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === convoId
+            ? {
+                ...c,
+                messages: c.messages.map(m =>
+                  m.id === assistantMsg.id ? { ...m, content: responseText } : m
+                ),
+              }
+            : c
+        )
+      );
     } catch (error: any) {
+      if (abortRef.current) return;
       const errorText = `Error: ${error?.message || "Something went wrong."}`;
       setConversations(prev =>
         prev.map(c =>
@@ -214,7 +159,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, selectedModel, isLoading, activeConvoId]);
+  }, [messages, isLoading, activeConvoId]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current = true;
@@ -226,8 +171,6 @@ export function useChat() {
     activeConvoId,
     messages,
     isLoading,
-    selectedModel,
-    setSelectedModel,
     sendMessage,
     stopGenerating,
     createNewChat,
