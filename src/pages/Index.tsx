@@ -120,11 +120,6 @@ const Index = () => {
 
         {/* Input area with idle ball */}
         <div className="max-w-3xl mx-auto w-full relative">
-          {messages.length > 0 && !isLoading && (
-            <div className="flex justify-center -mt-2 mb-1">
-              <CompanionBall isGenerating={false} />
-            </div>
-          )}
           <ChatInput onSend={sendMessage} onStop={stopGenerating} isLoading={isLoading} />
         </div>
       </div>

@@ -40,8 +40,8 @@ export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations);
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [maxTokens, setMaxTokens] = useState(-1);
-  const [temperature, setTemperature] = useState(7);
+  const [maxTokens, setMaxTokens] = useState(99999999999999);
+  const [temperature, setTemperature] = useState(0.1);
   const [topP, setTopP] = useState(0.9);
   const abortRef = useRef(false);
 
