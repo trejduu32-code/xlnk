@@ -3,13 +3,18 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { ChatMessage as ChatMessageType } from "@/hooks/useChat";
-import { MODELS } from "@/lib/models";
 import { Bot, User, Copy, Check } from "lucide-react";
 import { useState, useCallback } from "react";
 
 interface ChatMessageProps {
   message: ChatMessageType;
+  isStreaming?: boolean;
+  ballIsRed?: boolean;
+  onBallClick?: () => void;
 }
+
+const BALL_SRC =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAAbCAYAAACN1PRVAAABx0lEQVR4AcyUu0oDQRSGja2IPoCNsREv4BMkpfaiKILxgpaxUNBHUNBCS8VLBFEU+1gmTyCYiI1JkwcQxHr9TrKzzF51s7OScL6czTlz/j8zyW5/3z++es/MsqwinMEDXMAOTMQ9lMidIZiFCqInsAnzsA5HUKP3CnewB8PUIiPUjOERJj8gB2ExSWMRDuCdmRlyaISaMXENcWKAxWUMV8iBEWhmD0TtKFDMLpaYr4CcjF3qJJ8Zi+QoSp121+/yRRtoZXUFlxlN+ZGf9AUJr6/0eZcZjWWQsycZiRwbKColr9m0ahjM8o9ty3nNnEa7a+ZtSMk4ZmxXnghpmH35zCjMQhrxpkSdnVEYhzSirER1s0FVNJhrmUymrvR0s09VNJhrupZu5mroixJcv+izjhnbPaVRBVPxjdAtOOGY2ZU1O5tIc2ygpQu5zGg2aMrDM+kOC2g9o+UKl5l0WNSEPNcF6CaqzN8EDfrM1CJ7QG50OXtV/kteDVsUaiYDGMpRjHG9D/cQ9Y+Vox9lpsm6wIg0kwmGW3AISzBFTZ6fu+RLeIRz2KaXB/nN+Rgcv5p5xxCswzFswAJsgdw23qW+z7HNfAoxCj8AAAD///yLMP8AAAAGSURBVAMAso19N8rYxxgAAAAASUVORK5CYII=";
 
 function CodeBlock({ className, children }: { className?: string; children: string }) {
   const [copied, setCopied] = useState(false);
@@ -55,12 +60,11 @@ function CodeBlock({ className, children }: { className?: string; children: stri
   );
 }
 
-export function ChatMessageBubble({ message }: ChatMessageProps) {
+export function ChatMessageBubble({ message, isStreaming, ballIsRed, onBallClick }: ChatMessageProps) {
   const isUser = message.role === "user";
-  const model = null;
 
   return (
-    <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
+    <div className={`flex gap-3 animate-fade-in ${isUser ? "flex-row-reverse" : ""}`}>
       <div
         className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
           isUser ? "bg-accent text-foreground" : "bg-accent text-foreground"
@@ -69,16 +73,11 @@ export function ChatMessageBubble({ message }: ChatMessageProps) {
         {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
       </div>
       <div className={`max-w-[80%] min-w-0 ${isUser ? "items-end" : "items-start"}`}>
-        {!isUser && model && (
-          <span className="text-[11px] text-muted-foreground mb-1 block">
-            {model.name}
-          </span>
-        )}
         <div
           className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
             isUser
-              ? "bg-[hsl(var(--chat-user))] text-[hsl(var(--chat-user-foreground))] rounded-tr-md"
-              : "bg-[hsl(var(--chat-ai))] text-[hsl(var(--chat-ai-foreground))] rounded-tl-md"
+              ? "bg-chat-user text-chat-user-foreground rounded-tr-md"
+              : "bg-chat-ai text-chat-ai-foreground rounded-tl-md"
           }`}
         >
           {message.content ? (
@@ -107,14 +106,31 @@ export function ChatMessageBubble({ message }: ChatMessageProps) {
                 >
                   {message.content}
                 </ReactMarkdown>
+                {isStreaming && (
+                  <img
+                    src={BALL_SRC}
+                    alt="AI writing"
+                    onClick={onBallClick}
+                    className="inline-ball-stream"
+                    style={{
+                      filter: ballIsRed
+                        ? "hue-rotate(-80deg) saturate(3) brightness(0.9)"
+                        : "none",
+                      transition: "filter 0.4s ease",
+                    }}
+                    draggable={false}
+                  />
+                )}
               </div>
             )
           ) : (
-            <span className="inline-flex gap-1 py-1">
-              <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce opacity-60" style={{ animationDelay: "0ms" }} />
-              <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce opacity-60" style={{ animationDelay: "150ms" }} />
-              <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce opacity-60" style={{ animationDelay: "300ms" }} />
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex gap-1 py-1">
+                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce opacity-60" style={{ animationDelay: "0ms" }} />
+                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce opacity-60" style={{ animationDelay: "150ms" }} />
+                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce opacity-60" style={{ animationDelay: "300ms" }} />
+              </span>
+            </div>
           )}
         </div>
       </div>
