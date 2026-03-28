@@ -135,7 +135,7 @@ export function useChat() {
             },
             ...allMessages,
           ],
-          temperature: 0.1,
+          temperature: 0.8,
           max_tokens: -1,
           top_p: 0.9,
           stream: true,
