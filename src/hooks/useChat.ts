@@ -120,40 +120,62 @@ export function useChat() {
     abortRef.current = false;
 
     try {
-      const { Client } = await import("@gradio/client");
-      const client = await Client.connect("MiniMaxAI/MiniMax-VL-01");
-      
-      const job = client.submit("/chat", {
-        message: { text: content.trim(), files: [] },
-        max_tokens: maxTokens,
-        temperature,
-        top_p: topP,
+      const allMessages = activeConvo
+        ? [...activeConvo.messages.filter(m => m.content).map(m => ({ role: m.role, content: m.content })), { role: "user" as const, content: content.trim() }]
+        : [{ role: "user" as const, content: content.trim() }];
+
+      const controller = new AbortController();
+      const resp = await fetch("https://qwen-vl.ai.unturf.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer dummy-api-key" },
+        body: JSON.stringify({
+          model: "gpt-oss:latest",
+          messages: allMessages,
+          temperature,
+          max_tokens: maxTokens,
+          top_p: topP,
+          stream: true,
+        }),
+        signal: controller.signal,
       });
 
-      for await (const event of job) {
-        if (abortRef.current) {
-          job.cancel();
-          break;
+      if (!resp.ok || !resp.body) throw new Error(`API error: ${resp.status}`);
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let fullText = "";
+
+      while (true) {
+        if (abortRef.current) { controller.abort(); break; }
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let nl: number;
+        while ((nl = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, nl);
+          textBuffer = textBuffer.slice(nl + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullText += delta;
+              const captured = fullText;
+              setConversations(prev =>
+                prev.map(c =>
+                  c.id === convoId
+                    ? { ...c, messages: c.messages.map(m => m.id === assistantMsg.id ? { ...m, content: captured } : m) }
+                    : c
+                )
+              );
+            }
+          } catch {}
         }
-        if (event.type === "data") {
-          const chunk = String(event.data?.[0] ?? "");
-          if (chunk) {
-            const currentText = chunk;
-            setConversations(prev =>
-              prev.map(c =>
-                c.id === convoId
-                  ? {
-                      ...c,
-                      messages: c.messages.map(m =>
-                        m.id === assistantMsg.id ? { ...m, content: currentText } : m
-                      ),
-                    }
-                  : c
-              )
-            );
-          }
-        }
-        // Ignore status/log events - don't break out of the loop
       }
     } catch (error: any) {
       if (abortRef.current) return;
