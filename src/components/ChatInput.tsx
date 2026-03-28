@@ -43,10 +43,7 @@ export function ChatInput({ onSend, onStop, isLoading }: ChatInputProps) {
           rows={1}
           className="w-full resize-none bg-transparent px-4 pt-3 pb-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
-        <div className="flex items-center justify-between px-3 pb-2.5">
-          <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg">
-            <Paperclip className="w-4 h-4" />
-          </button>
+        <div className="flex items-center justify-end px-3 pb-2.5">
           {isLoading ? (
             <button
               onClick={onStop}

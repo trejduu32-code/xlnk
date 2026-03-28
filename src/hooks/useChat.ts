@@ -128,7 +128,13 @@ export function useChat() {
         headers: { "Content-Type": "application/json", Authorization: "Bearer dummy-api-key" },
         body: JSON.stringify({
           model: selectedModel,
-          messages: allMessages,
+          messages: [
+            {
+              role: "system",
+              content: "You are 1mpAi, an advanced AI assistant created by Riste Stev. You are helpful, knowledgeable, creative, and precise. You provide clear, well-structured answers. When writing code, you use best practices and include helpful comments. You are friendly yet professional, and always aim to give the most accurate and useful response possible. If you don't know something, you say so honestly rather than guessing. You can reason step-by-step through complex problems.",
+            },
+            ...allMessages,
+          ],
           temperature: 0.1,
           max_tokens: -1,
           top_p: 0.9,
