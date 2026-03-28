@@ -40,9 +40,7 @@ export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>(loadConversations);
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [maxTokens, setMaxTokens] = useState(99999999999999);
-  const [temperature, setTemperature] = useState(0.1);
-  const [topP, setTopP] = useState(0.9);
+  const [selectedModel, setSelectedModel] = useState("gpt-oss:latest");
   const abortRef = useRef(false);
 
   const activeConvo = conversations.find(c => c.id === activeConvoId) || null;
@@ -129,11 +127,11 @@ export function useChat() {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer dummy-api-key" },
         body: JSON.stringify({
-          model: "gpt-oss:latest",
+          model: selectedModel,
           messages: allMessages,
-          temperature,
-          max_tokens: maxTokens,
-          top_p: topP,
+          temperature: 0.1,
+          max_tokens: -1,
+          top_p: 0.9,
           stream: true,
         }),
         signal: controller.signal,
@@ -195,7 +193,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, activeConvoId, maxTokens, temperature, topP]);
+  }, [messages, isLoading, activeConvoId, selectedModel]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current = true;
@@ -207,12 +205,8 @@ export function useChat() {
     activeConvoId,
     messages,
     isLoading,
-    maxTokens,
-    setMaxTokens,
-    temperature,
-    setTemperature,
-    topP,
-    setTopP,
+    selectedModel,
+    setSelectedModel,
     sendMessage,
     stopGenerating,
     createNewChat,

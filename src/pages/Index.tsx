@@ -3,7 +3,7 @@ import { useChat } from "@/hooks/useChat";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { ChatInput } from "@/components/ChatInput";
 import { ChatMessageBubble } from "@/components/ChatMessage";
-import { ChatSettings } from "@/components/ChatSettings";
+import { ModelSelector } from "@/components/ModelSelector";
 import { CompanionBall } from "@/components/CompanionBall";
 import { Menu } from "lucide-react";
 
@@ -13,12 +13,8 @@ const Index = () => {
     activeConvoId,
     messages,
     isLoading,
-    maxTokens,
-    setMaxTokens,
-    temperature,
-    setTemperature,
-    topP,
-    setTopP,
+    selectedModel,
+    setSelectedModel,
     sendMessage,
     stopGenerating,
     createNewChat,
@@ -44,7 +40,6 @@ const Index = () => {
     ballTimerRef.current = setTimeout(() => setBallIsRed(false), 3000);
   }, []);
 
-  // Determine which message (if any) is currently streaming
   const streamingMsgId =
     isLoading && messages.length > 0 && messages[messages.length - 1].role === "assistant"
       ? messages[messages.length - 1].id
@@ -75,13 +70,10 @@ const Index = () => {
             </button>
             <span className="text-sm font-semibold text-foreground">1mp Ai</span>
           </div>
-          <ChatSettings
-            maxTokens={maxTokens}
-            setMaxTokens={setMaxTokens}
-            temperature={temperature}
-            setTemperature={setTemperature}
-            topP={topP}
-            setTopP={setTopP}
+          <ModelSelector
+            value={selectedModel}
+            onChange={setSelectedModel}
+            disabled={isLoading}
           />
         </div>
 
@@ -100,7 +92,7 @@ const Index = () => {
               </div>
               <h2 className="text-lg font-semibold text-foreground mb-1">1mp Ai</h2>
               <p className="text-sm text-muted-foreground max-w-sm">
-                Ask anything — powered by MiniMax VL-01.
+                Ask anything — powered by multiple AI models.
               </p>
             </div>
           ) : (
@@ -118,7 +110,7 @@ const Index = () => {
           )}
         </div>
 
-        {/* Input area with idle ball */}
+        {/* Input area */}
         <div className="max-w-3xl mx-auto w-full relative">
           <ChatInput onSend={sendMessage} onStop={stopGenerating} isLoading={isLoading} />
         </div>
